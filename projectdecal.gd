@@ -2,6 +2,8 @@ extends ImmediateGeometry
 
 onready var area = $Area
 
+const Z_BUFFER_DIS = 0.01 
+
 var frame_count = 0
 func _physics_process(delta):
 	frame_count += 1
@@ -25,11 +27,12 @@ func perform_projection():
 				arrays[ArrayMesh.ARRAY_INDEX] = range(arrays[ArrayMesh.ARRAY_VERTEX].size())
 			
 			add_surfaces(parent, arrays[ArrayMesh.ARRAY_VERTEX], arrays[ArrayMesh.ARRAY_NORMAL], arrays[ArrayMesh.ARRAY_INDEX])
-			parent.hide()
+			#parent.hide()
 	render_surfaces()
 
 var all_norms = []
 var all_verts = []
+var verts_to_norms = {}
 func add_surfaces(base, vertices, normals, indices):
 	#print("vertices", vertices)
 	#print("normals", normals)
@@ -47,6 +50,27 @@ func add_surfaces(base, vertices, normals, indices):
 			all_norms.append(normal_to_new_base(base, self, normals[indices[i]]))
 			all_norms.append(normal_to_new_base(base, self, normals[indices[i+1]]))
 			all_norms.append(normal_to_new_base(base, self, normals[indices[i+2]]))
+	push_out_verts()
+
+func push_out_verts():
+	#compile all normals corresponding to each vertice, since there are many duplicates
+	for i in range(all_verts.size()):
+		var ind = vec3_to_index(all_verts[i])
+		if not ind in verts_to_norms:
+			verts_to_norms[ind] = {}
+		var n = all_norms[i]
+		var n_ind = vec3_to_index(n)
+		verts_to_norms[ind][n_ind] = n
+	
+	#push the vertices along their normals to prevent zfighting with existing geometry
+	for i in range(all_verts.size()):
+		var ind = vec3_to_index(all_verts[i])
+		var norms = verts_to_norms[ind].values()
+		var sum_of_normals = Vector3()
+		for norm in norms:
+			sum_of_normals += norm
+		sum_of_normals /= norms.size() #normalize it
+		all_verts[i] += sum_of_normals * Z_BUFFER_DIS #push out the vert
 
 func normal_to_new_base(from_base, to_base, norm):
 	var global = from_base.to_global(norm) - from_base.global_transform.origin
@@ -192,3 +216,7 @@ func init_planes():
 	planes.append(Plane(Vector3.LEFT, to_local(area.to_global(Vector3.LEFT)).length()))
 	planes.append(Plane(Vector3.UP, to_local(area.to_global(Vector3.UP)).length()))
 	planes.append(Plane(Vector3.DOWN, to_local(area.to_global(Vector3.DOWN)).length()))
+
+func vec3_to_index(v3):
+	var round_amnt = 1000
+	return "(" + str(int(v3.x * round_amnt)) + "," + str(int(v3.y * round_amnt)) + "," + str(int(v3.z * round_amnt)) + ")"

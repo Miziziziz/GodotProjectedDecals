@@ -1,6 +1,9 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://projectdecal.gd" type="Script" id=1]
+
+[sub_resource type="SpatialMaterial" id=7]
+albedo_color = Color( 1, 0, 0, 1 )
 
 [sub_resource type="BoxShape" id=1]
 
@@ -21,6 +24,7 @@ points = PoolVector3Array( -0.5, -0.5, 0, -0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5,
 [node name="ImmediateGeometry" type="ImmediateGeometry" parent="."]
 editor/display_folded = true
 transform = Transform( 0.87322, -0.1516, -0.463146, 0, 0.950382, -0.311086, 0.487326, 0.271646, 0.829892, 6.20207, 4.00511, 0 )
+material_override = SubResource( 7 )
 script = ExtResource( 1 )
 
 [node name="Area" type="Area" parent="ImmediateGeometry"]

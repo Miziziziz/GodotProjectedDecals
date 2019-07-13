@@ -7,7 +7,7 @@ const MIN_ANGLE = 0.0 #scale of 1.0 to 0.0
 var frame_count = 0
 func _physics_process(delta):
 	frame_count += 1
-	if frame_count != 3: #takes 2 frames to load colliders in area for some reason
+	if frame_count != 3: #takes a few frames to load colliders in area for some reason
 		return
 	perform_projection()
 
@@ -27,8 +27,8 @@ func perform_projection():
 				arrays[ArrayMesh.ARRAY_INDEX] = range(arrays[ArrayMesh.ARRAY_VERTEX].size())
 			
 			add_surfaces(parent, arrays[ArrayMesh.ARRAY_VERTEX], arrays[ArrayMesh.ARRAY_NORMAL], arrays[ArrayMesh.ARRAY_INDEX])
-			#parent.hide()
 	render_surfaces()
+	#area.queue_free()
 
 var all_norms = []
 var all_verts = []

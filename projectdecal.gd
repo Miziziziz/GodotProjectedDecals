@@ -3,7 +3,7 @@ extends ImmediateGeometry
 onready var area = $Area
 
 const Z_BUFFER_DIS = 0.01 
-
+const MIN_ANGLE = 0.0 #scale of 1.0 to 0.0
 var frame_count = 0
 func _physics_process(delta):
 	frame_count += 1
@@ -43,7 +43,7 @@ func add_surfaces(base, vertices, normals, indices):
 		#var normal = base.to_global(normals[indices[i]]) - base.global_transform.origin
 		var normal = normal_to_new_base(base, self, normals[indices[i]])
 		# if pointing towards us, duplicate it
-		if normal.dot(Vector3.FORWARD) > 0:
+		if normal.dot(Vector3.FORWARD) > MIN_ANGLE:
 			all_verts.append(point_to_new_base(base, self, vertices[indices[i]]))
 			all_verts.append(point_to_new_base(base, self, vertices[indices[i+1]]))
 			all_verts.append(point_to_new_base(base, self, vertices[indices[i+2]]))
@@ -91,18 +91,31 @@ func render_surfaces():
 		var vc = verts_in_area(vert0, vert1, vert2)
 		if vc == 3:
 			set_normal(all_norms[i])
+			set_uv(get_uv_from_vert(all_verts[i]))
 			add_vertex(all_verts[i])
 			set_normal(all_norms[i+1])
+			set_uv(get_uv_from_vert(all_verts[i+1]))
 			add_vertex(all_verts[i+1])
 			set_normal(all_norms[i+2])
+			set_uv(get_uv_from_vert(all_verts[i+2]))
 			add_vertex(all_verts[i+2])
 		elif vc != 0 or area_overlaps_tri(vert0, vert1, vert2):
 			var clipped_verts = clip_tri_to_area(PoolVector3Array([all_verts[i], all_verts[i+1], all_verts[i+2]]))
 			clipped_verts = double_check_clipped_tris(clipped_verts)
 			for v in clipped_verts:
 				set_normal(all_norms[i])
+				set_uv(get_uv_from_vert(v))
 				add_vertex(v)
 	end()
+
+func get_uv_from_vert(vert):
+	var uv = Vector2()
+	uv.x = vert.x / to_local(area.to_global(Vector3.RIGHT)).x
+	uv.y = vert.y / to_local(area.to_global(Vector3.DOWN)).y
+	uv = (uv / 2.0) + Vector2(0.5, 0.5)
+	uv.x = clamp(uv.x, 0.0, 1.0)
+	uv.y = clamp(uv.y, 0.0, 1.0)
+	return uv
 
 func verts_in_area(vert0, vert1, vert2):
 	var num_of_verts_in_area = 0
